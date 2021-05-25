@@ -49,23 +49,14 @@ def available_buildings():
     return 'ok'
 
 
-@app.route('/getclassrooms')
-def available_classrooms():
-    building = request.args.get('building')
-    return dumps(main_db.building.find({"name": building}))
-
-@app.route('/getseats')
-def available_seats():
-    classroom = request.args.get('classroom')
-    return dumps(main_db.classroom.find({"name": classroom}))   # è un'altra collection?
-
 @app.route('/selectseats', methods=['POST'])
 def select_seats():
-    seats = request.json
-    if not seats:
+    reservation = request.json
+    seats = reservation['seats']
+    if not reservation:
         return 'bad request', 400
-
-    # come inserire valori nel database
+    main_db.reservation.insert({ 'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
+                                 'seats': seats})
     return 'ok', 200
 
 if __name__ == '__main__':
