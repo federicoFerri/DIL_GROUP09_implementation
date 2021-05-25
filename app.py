@@ -1,6 +1,10 @@
 from bson.json_util import dumps
 from flask import Flask, request, jsonify
+from collections import defaultdict
+import calendar
+import datetime
 import pymongo
+import copy
 
 app = Flask(__name__, static_url_path='')
 
@@ -19,10 +23,31 @@ def api_index():
     main_db.test_collection.find({})
     return 'Hello world api'
 
+
 @app.route('/getbuildings')
 def available_buildings():
-   num_seats = request.args.get('num_seats')
-   return main_db.building.find({})       # TODO ritornare solo gli edifici che hanno un tot numero di posti disponibili
+    num_seats = request.args.get('num_seats', type=int)
+    start_day, end_day = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)
+    reservations = main_db.reservation.find({'startDate': {'$gt': datetime.date.today().replace(day=start_day), '$lt': datetime.date.today().replace(day=end_day)}})
+    buildings = {building['name']: {classroom['name']: {hour: classroom['seats'] for hour in range(8, 23)} for classroom in building['classrooms']} for building in main_db.building.find({})}
+    for day in range(start_day, end_day + 1):
+        today_reservations = [reservation for reservation in reservations if reservation['startDate'].day == day]
+        used = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        available = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        for reservation in today_reservations:
+            for seat in reservation['seats']:
+                hours = list(range(reservation['startDate'].hour, reservation['endDate'].hour))
+                for hour in hours:
+                    used[seat['buildingName']][seat['classroomName']][hour].append(seat['number'])
+        for building, classrooms in buildings.items():
+            for classroom, hours in classrooms.items():
+                for hour, seats in hours.items():
+                    available_seats = set(seats) - set(used[building][classroom][hour])
+                    if len(available_seats) >= num_seats:
+                        available[building][classroom][hour].extend(available_seats)
+        print(available)
+    return 'ok'
+
 
 @app.route('/getclassrooms')
 def available_classrooms():
