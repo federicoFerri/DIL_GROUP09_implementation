@@ -3,8 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- collega js -->
 </head>
+
 <body>
-    Another hello world
+
+
+    <div>
+        <h1 class="title">How many seats?</h1>
+    </div>
+
+
+    <div class="seatCounter">
+        <input id=demoInput type=number min=1 max=8>
+        <button onclick="increment()">+</button>
+        <button onclick="decrement()">-</button>
+
+    </div>
+
+    <div class="bottombar">
+        <img src="images/bottombar.png">
+    </div>
 </body>
 </html>
+
+
+<style>
+    .bottombar {
+        width: 100%;
+        position: fixed;
+        bottom: 0px;
+    }
+</style>
