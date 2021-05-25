@@ -1,154 +1,68 @@
-.container{
-    position: absolute;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.bottombar {
-    width: 100%;
-    position: fixed;
-    bottom: 0px;
-}
-
-.confirmBtn{
-    background-color: #4CAF50; /* Green */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 12px;
-    width: 60%;
-    margin-top:auto;
-  }
-
-.title{
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
-}
-
-.seatCounter{
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
 body {
-    background-color: #333;
-    color: #aaa;
-    font-family: 'Josefin Sans';
-  }
-  
-  .calendar {
-    width: 350px;
-    margin: 50px auto 0;
-  }
-  
-  .calendar__month {
-    font-size: 20px;
-    font-weight: 800;
-    padding: 10px 0;
-    width: 100%;
-    position: relative;
-  }
-  
-  .cal-month__previous,
-  .cal-month__next {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    text-align: center;
-  }
-    
-    .cal-month__next:hover {
-      background-color: #42A5F5;
-      box-shadow: 0 5px 5px -5px rgba(0,0,0,0.75);
-      border-radius: 50%;
-      font-weight: 800;
-      color: #111;
-    
-  }
-  
-  .cal-month__next {
-    right: 0;
-  }
-  
-  .cal-month__current {
-    text-align: center;
-    color: #e1e1e1;
-  }
-  
-  .cal-head__day,
-  .cal-body__day {
-    display: inline-block;
-    width: 50px;
-    height: 50px;
-    float: left;
-  }
-  
-  .cal-body__week,
-  .calendar__head {
-    display: block;
-    height: 50px;
-    width: 350px;
-  }
-  
-  .calendar__head {
-    line-height: 50px;
-    position: relative;
-  }
-    
-    .calendar__head:after {
-      content: ' ';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background-color: #90CAF9;
-    
-  }
-  
-  .cal-body__day {
-    color: #777;
-    line-height: 50px;
-    text-align: center;
-    cursor: pointer;
-  }
-  
-  .cal-day__month--current {
-    color: #e1e1e1;
-  }
-  
-  .cal-day__day--today {
-    font-weight: 800;
-    color: #2196f3;
-  }
-  
-  .cal-day__day--selected {
-    background-color: #2196f3;
-    box-shadow: 0 5px 10px -5px rgba(0, 0, 0, .75);
-    border-radius: 50%;
-    color: #111;
-  }
+  margin: 0px;
+}
 
+html {
+  font-family: 'Roboto', sans-serif;
+  box-sizing: border-box;
+}
 
-.custom-select{
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+h1 {
+  font-size: 60px;
+}
 
+h2 {
+  font-size: 35px;
+}
+
+p {
+  font-size: 23px;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+a:hover {
+  color: grey;
 }
 
 
+button {
+  border-style: solid;
+  background-color: #4CAF50;
+  border-color: rgb(61, 124, 70);
+  text-align: center;
+  font-size: 20px;
+  color: white;
+  border-radius: 30px;
+}
+
+button:hover {
+  background-color: #39853c;
+}
+
+.bottombar {
+  position: fixed;
+  bottom: 0;
+  max-width: 100%;
+  max-height: 100px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}

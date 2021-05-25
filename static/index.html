@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="./css/style.css">
-    <script src="./js/index.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com"> 
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -16,16 +17,80 @@
 
 
     <div class="seatCounter">
-        <input id=demoInput type=number min=1 max=8>
-        <button onclick="increment()">+</button>
-        <button onclick="decrement()">-</button>
-
+        
+        <input class="input" id=seatInput type=number min=1 max=8 value=1>
+        <div class="addSubButtons">
+            <button class="addSub" onclick="increment()">+</button>
+            <button class="addSub" onclick="decrement()">-</button>
+        </div>
     </div>
 
-    <div class="bottombar">
-        <img src="images/bottombar.png">
+    <button class="search" >Search</button>
+
+    <div>
+        <img class="bottombar" src="images/bottombar.png">
     </div>
 </body>
 </html>
 
+<style>
+    .title {
+        margin-bottom: 130px;
+        text-align: center;
+        margin-top: 20px;
+    }
 
+    .input {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 60px;
+        height: 60px;
+        border-radius: 20%;
+        border-style: solid;
+        border-color: rgb(224, 224, 224);
+        font-size: 22px;
+        text-align: center;
+    }
+
+    .addSubButtons {
+        display: block;
+        margin-top: 30px;
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .addSub {
+        font-size: 34px;
+        width: 70px;
+        height: 70px;
+        margin: 20px;
+        border-radius: 50%;
+        color: white;
+        background-color: #4CAF50;
+        border-color: rgb(139, 139, 139);
+    }
+
+    .search {
+        width: 400px;
+        margin-top: 100px;
+        text-align: center;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        height: 50px;
+    }
+
+</style>
+
+<script>
+    function increment() {
+       document.getElementById('seatInput').stepUp();
+    }
+    function decrement() {
+       document.getElementById('seatInput').stepDown();
+    }
+
+    
+ </script>
