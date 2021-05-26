@@ -46,6 +46,7 @@ let myOptions=[
 ];
 
 
+
 var instance = new SelectPure(".example", {
     options: myOptions,
     multiple: true // default: false
