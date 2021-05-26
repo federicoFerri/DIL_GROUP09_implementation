@@ -24,11 +24,13 @@ def api_index():
     return 'Hello world api'
 
 
-@app.route('/getbuildings')
+@app.route('/api/getbuildings')
 def available_buildings():
-    num_seats = request.args.get('num_seats', type=int)
+    num_seats = request.args.get('num_seats', 1, type=int)
     start_day, end_day = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)
-    reservations = main_db.reservation.find({'startDate': {'$gt': datetime.date.today().replace(day=start_day), '$lt': datetime.date.today().replace(day=end_day)}})
+    start_date = datetime.datetime.combine(datetime.date.today().replace(day=start_day), datetime.datetime.min.time())
+    end_date = datetime.datetime.combine(datetime.date.today().replace(day=end_day), datetime.datetime.min.time())
+    reservations = main_db.reservation.find({'startDate': {'$gt': start_date, '$lt': end_date}})
     buildings = {building['name']: {classroom['name']: {hour: classroom['seats'] for hour in range(8, 23)} for classroom in building['classrooms']} for building in main_db.building.find({})}
     for day in range(start_day, end_day + 1):
         today_reservations = [reservation for reservation in reservations if reservation['startDate'].day == day]
