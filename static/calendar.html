@@ -10,7 +10,7 @@
 <body>
     <div class="container">
     <div>
-        <h1 class="title">Select a date</h1>
+        <h2 class="title">Select a date</h2>
     </div>
     
     <div class="bottombar">
@@ -90,19 +90,13 @@
         </div>
       </div>
 
-      <div class="custom-select" style="width:200px;">
-        <select>
-          <option value="0">Select a time slot:</option>
-          <option value="1"></option>
-          <option value="2"></option>
-          <option value="3"></option>
-        </select>
-      </div>
-    
+    <span class="example"></span>
     <button type="button" class="confirmBtn" onclick="sendDate()">Select</button>
     </div>
     <script src="./js/moment.js"></script>
     <script src="./js/calendar.js"></script>
+    <script src="./js/bundle.min.js"></script>
+    <script src="./js/bar.js"></script>
 </body>
 </html>
 
@@ -136,7 +130,7 @@
   .title{
       margin-left: auto;
       margin-right: auto;
-      width: 50%;
+      width: 60%;
   }
 
   .seatCounter{
@@ -248,12 +242,5 @@
       color: #111;
     }
 
-
-  .custom-select{
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-
-  }
 </style>
 
