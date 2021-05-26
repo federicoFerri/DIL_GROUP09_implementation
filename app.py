@@ -24,7 +24,7 @@ def api_index():
     return 'Hello world api'
 
 
-@app.route('/getbuildings')
+@app.route('/getBuildings')
 def available_buildings():
     num_seats = request.args.get('num_seats', type=int)
     start_day, end_day = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)
@@ -49,10 +49,11 @@ def available_buildings():
     return 'ok'
 
 
-@app.route('/selectseats', methods=['POST'])
-def select_seats():
+@app.route('/reserveSeats', methods=['POST'])
+def reserve_seats():
     reservation = request.json
     seats = reservation['seats']
+    print(obj for obj in seats)
     if not reservation:
         return 'bad request', 400
     main_db.reservation.insert({ 'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
