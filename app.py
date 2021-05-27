@@ -29,9 +29,9 @@ def available_buildings():
     num_seats = request.args.get('num_seats', 1, type=int)
     start_day, end_day = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)
     start_date = datetime.datetime.combine(datetime.date.today().replace(day=start_day), datetime.datetime.min.time())
-    end_date = datetime.datetime.combine(datetime.date.today().replace(day=end_day), datetime.datetime.min.time())
+    end_date = datetime.datetime.combine(datetime.date.today().replace(day=end_day), datetime.datetime.max.time())
     reservations = main_db.reservation.find({'startDate': {'$gt': start_date, '$lt': end_date}})
-    buildings = {building['name']: {classroom['name']: {hour: classroom['seats'] for hour in range(8, 23)} for classroom in building['classrooms']} for building in main_db.building.find({})}
+    buildings = {hour: {building['name']: {classroom['name']: classroom['seats'] for classroom in building['classrooms']} for building in main_db.building.find({})} for hour in range(8, 23)}
     for day in range(start_day, end_day + 1):
         today_reservations = [reservation for reservation in reservations if reservation['startDate'].day == day]
         used = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -40,14 +40,15 @@ def available_buildings():
             for seat in reservation['seats']:
                 hours = list(range(reservation['startDate'].hour, reservation['endDate'].hour))
                 for hour in hours:
-                    used[seat['buildingName']][seat['classroomName']][hour].append(seat['number'])
+                    used[hour][seat['buildingName']][seat['classroomName']].append(seat['number'])
         for building, classrooms in buildings.items():
             for classroom, hours in classrooms.items():
                 for hour, seats in hours.items():
-                    available_seats = set(seats) - set(used[building][classroom][hour])
+                    available_seats = set(seats) - set(used[hour][building][classroom])
                     if len(available_seats) >= num_seats:
-                        available[building][classroom][hour].extend(available_seats)
+                        available[hour][building][classroom].extend(available_seats)
         print(available)
+
     return 'ok'
 
 
@@ -61,6 +62,7 @@ def reserve_seats():
     main_db.reservation.insert({ 'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
                                  'seats': seats})
     return 'ok', 200
+
 
 if __name__ == '__main__':
     app.run()
