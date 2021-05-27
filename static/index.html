@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <button class="search" >Search</button>
+    <button class="search" id="searchBtn">Search</button>
 
     <div>
         <img class="bottombar" src="images/bottombar.png">
@@ -92,5 +92,9 @@
        document.getElementById('seatInput').stepDown();
     }
 
-    
+    document.getElementById("searchBtn").onclick = function () {
+        location.href= "./alt_calendar.html";
+    };
+
  </script>
+
