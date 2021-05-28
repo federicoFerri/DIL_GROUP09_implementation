@@ -31,7 +31,9 @@ def available_buildings():
     start_date = datetime.datetime.combine(datetime.date.today().replace(day=start_day), datetime.datetime.min.time())
     end_date = datetime.datetime.combine(datetime.date.today().replace(day=end_day), datetime.datetime.max.time())
     reservations = main_db.reservation.find({'startDate': {'$gt': start_date, '$lt': end_date}})
-    buildings = {hour: {building['name']: {classroom['name']: classroom['seats'] for classroom in building['classrooms']} for building in main_db.building.find({})} for hour in range(8, 23)}
+    buildings = {
+        hour: {building['name']: {classroom['name']: classroom['seats'] for classroom in building['classrooms']} for
+               building in main_db.building.find({})} for hour in range(8, 23)}
     for day in range(start_day, end_day + 1):
         today_reservations = [reservation for reservation in reservations if reservation['startDate'].day == day]
         used = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -56,12 +58,35 @@ def available_buildings():
 def reserve_seats():
     reservation = request.json
     seats = reservation['seats']
-    print(obj for obj in seats)
     if not reservation:
         return 'bad request', 400
-    main_db.reservation.insert({ 'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
-                                 'seats': seats})
+    main_db.reservation.insert(
+        {'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
+         'seats': seats})
     return 'ok', 200
+
+
+@app.route('/getByDate')
+def seats_by_date():
+    date = request.args.get('date')
+    start_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    end_date = start_date.replace(day=start_date.day + 1)
+    today_reservations = main_db.reservation.find({'startDate': {'$gt': start_date, '$lt': end_date}})
+    occupied_seats = []
+    available_seats = []
+    for reservation in today_reservations:
+        for seat in reservation['seats']:
+            occupied_seats.insert(seat)
+    buildings = main_db.building.find({})
+    for building in buildings:
+        for classroom in building['classrooms']:
+            for seat in classroom['seats']:
+                if seat not in occupied_seats:
+                    available_seats.insert(
+                        {"seat": seat,
+                         "building": building,
+                         "classroom": classroom})
+    return jsonify(available_seats), 200
 
 
 if __name__ == '__main__':
