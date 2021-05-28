@@ -1,10 +1,8 @@
-from bson.json_util import dumps
 from flask import Flask, request, jsonify
 from collections import defaultdict
-import calendar
 import datetime
 import pymongo
-import copy
+import pytz
 
 app = Flask(__name__, static_url_path='')
 
@@ -18,42 +16,75 @@ def index():
     return app.send_static_file('index.html')
 
 
-@app.route('/api/')
-def api_index():
-    main_db.test_collection.find({})
-    return 'Hello world api'
+def compute_availabilities(default, reservations, tz):
+    not_available = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for reservation in reservations:
+        start_date = reservation['startDate'].astimezone(tz)
+        end_date = reservation['endDate'].astimezone(tz)
+        for seat in reservation['seats']:
+            hours = list(range(start_date.hour, end_date.hour))
+            for hour in hours:
+                not_available[hour][seat['buildingName']][seat['classroomName']].append(seat['number'])
 
-
-@app.route('/api/getbuildings')
-def available_buildings():
-    num_seats = request.args.get('num_seats', 1, type=int)
-    start_day, end_day = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)
-    start_date = datetime.datetime.combine(datetime.date.today().replace(day=start_day), datetime.datetime.min.time())
-    end_date = datetime.datetime.combine(datetime.date.today().replace(day=end_day), datetime.datetime.max.time())
-    reservations = main_db.reservation.find({'startDate': {'$gt': start_date, '$lt': end_date}})
-    buildings = {hour: {building['name']: {classroom['name']: classroom['seats'] for classroom in building['classrooms']} for building in main_db.building.find({})} for hour in range(8, 23)}
-    for day in range(start_day, end_day + 1):
-        today_reservations = [reservation for reservation in reservations if reservation['startDate'].day == day]
-        used = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-        available = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-        for reservation in today_reservations:
-            for seat in reservation['seats']:
-                hours = list(range(reservation['startDate'].hour, reservation['endDate'].hour))
-                for hour in hours:
-                    used[hour][seat['buildingName']][seat['classroomName']].append(seat['number'])
+    available = []
+    for hour, buildings in default.items():
         for building, classrooms in buildings.items():
-            for classroom, hours in classrooms.items():
-                for hour, seats in hours.items():
-                    available_seats = set(seats) - set(used[hour][building][classroom])
-                    if len(available_seats) >= num_seats:
-                        available[hour][building][classroom].extend(available_seats)
-        print(available)
-
-    return 'ok'
+            for classroom, seats in classrooms.items():
+                available_seats = set(seats) - set(not_available[hour][building][classroom])
+                if len(available_seats) > 0:
+                    available.append({'hour': hour, 'buildingName': building, 'classroomName': classroom,
+                                      'seatsNumber': list(available_seats)})
+    return available
 
 
-@app.route('/selectseats', methods=['POST'])
-def select_seats():
+@app.route('/api/get_dates')
+def get_dates():
+    tz = pytz.timezone('Europe/Rome')
+    now = datetime.datetime.now(tz)
+    reservations = list(main_db.reservation.find({'$or': [{'startDate': {'$gt': now}}, {'endDate': {'$gt': now}}]}))
+
+    dates = []
+    for date in [now] + [now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=i) for i in
+                         range(1, 6)]:
+        date_after = date.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+        filtered_reservations = [reservation for reservation in reservations if
+                        date < reservation['startDate'] < date_after or date < reservation['endDate'] < date_after]
+        default = {hour: {building['name']: {classroom['name']: classroom['seats']
+                                             for classroom in building['classrooms']}
+                          for building in main_db.building.find({})} for hour in range(max(date.hour, 8), 23)}
+        if len(compute_availabilities(default, filtered_reservations, tz)) > 0:
+            dates.append(date.strftime('%Y-%m-%d'))
+    return jsonify(dates)
+
+
+@app.route('/api/get_availabilities')
+def get_availabilities():
+    date_string = request.args.get('date')
+    tz = pytz.timezone('Europe/Rome')
+    if date_string is not None:
+        try:
+            date = tz.localize(datetime.datetime.strptime(date_string, '%Y-%m-%d'))
+        except ValueError as e:
+            return str(e), 422
+        now = datetime.datetime.now(tz)
+        if date.date() == now.date():
+            date = now
+    else:
+        date = datetime.datetime.now(tz)
+    date_after = date.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+    reservations = list(main_db.reservation.find({
+        '$or': [{'startDate': {'$gt': date, '$lt': date_after}}, {'endDate': {'$gt': date, '$lt': date_after}}]}))
+    default = {hour: {building['name']: {classroom['name']: classroom['seats'] for classroom in building['classrooms']}
+                      for building in main_db.building.find({})} for hour in range(max(date.hour, 8), 23)}
+    available = compute_availabilities(default, reservations, tz)
+    return jsonify(available)
+
+
+@app.route('/api/book_seats', methods=['POST'])
+def book_seats():
+    # TODO: use jsonschema to validate schema
+    # TODO: validate that the availability is indeed available using compute_availabilities like in previous functions
+    # TODO insert booking into DB
     reservation = request.json
     seats = reservation['seats']
     if not reservation:
