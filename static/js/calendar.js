@@ -6,6 +6,8 @@ class Calendar {
       this.bodyDivs = document.querySelectorAll('.cal-body__day')
       this.nextDiv = document.querySelector('.cal-month__next')
       this.prevDiv = document.querySelector('.cal-month__previous')
+      this.submitButton = document.getElementById('submitButton')
+      this.submitReservation = document.getElementById('submitReservationButton') //TODO Set button in html file
     }
     
     init () {
@@ -37,10 +39,46 @@ class Calendar {
           this.update()
         })
       })
-      
+
+      this.submitButton.addEventListener('click', e => {
+        let url =  '/api/get_availabilities?date=' + this.selected._i;
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(response) {
+            console.log(response);
+            //TODO Show seats in html page + add filters
+          },
+          error: function(response) {
+            console.error(response);
+          }
+        });
+      });
+
+      this.submitReservation.addEventListener('click', e => {
+        let jsonReq = {
+          'userId': 'marco938',
+          'startDate': '', //TODO
+          'endDate': '', //TODO
+          'seats': '' //TODO
+        }
+        $.ajax({
+          url: '/api/book_seats',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(jsonReq),
+          success: function (response) {
+            alert("Reservation done!");
+          },
+          error: function (response) {
+            console.error(response);
+          }
+        });
+      });
+
       this.update()
     }
-    
+
     update () {
       this.calendarDays = {
         first: this.month.clone().startOf('month').startOf('week').date(),
@@ -125,6 +163,7 @@ class Calendar {
           this.bodyDivs[index].classList.remove('cal-day__day--selected') 
       }
     }
+
   }
   
   const cal = new Calendar()
