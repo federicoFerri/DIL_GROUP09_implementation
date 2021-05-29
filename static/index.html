@@ -13,6 +13,7 @@
 
     <div>
         <h1 class="title">How many seats?</h1>
+        <h2 class="instruction">Please select the number of seats you want to book</h2>
     </div>
 
 
@@ -27,9 +28,7 @@
 
     <button class="search" id="searchBtn">Search</button>
 
-    <div>
-        <img class="bottombar" src="images/bottombar.png">
-    </div>
+    
 </body>
 </html>
 
@@ -37,34 +36,45 @@
     .title {
         margin-bottom: 130px;
         text-align: center;
-        margin-top: 20px;
+        margin-top: 200px;
+        font-size: 100px;
+    }
+
+    .instruction {
+        text-align: center;
+        margin-bottom: 100px;
     }
 
     .input {
         display: block;
         margin-left: auto;
         margin-right: auto;
-        width: 60px;
-        height: 60px;
+        top: auto;
+        width: 200px;
+        height: 200px;
         border-radius: 20%;
         border-style: solid;
         border-color: rgb(224, 224, 224);
-        font-size: 22px;
+        font-size: 88px;
         text-align: center;
     }
 
     .addSubButtons {
         display: block;
-        margin-top: 30px;
+        margin-top: 60px;
         text-align: center;
         margin-left: auto;
         margin-right: auto;
+        margin-bottom: 60px;
+        width: 400px;
+        height: 300px;
+        
     }
 
     .addSub {
-        font-size: 34px;
-        width: 70px;
-        height: 70px;
+        font-size: 80px;
+        width: 130px;
+        height: 130px;
         margin: 20px;
         border-radius: 50%;
         color: white;
@@ -79,7 +89,10 @@
         display: block;
         margin-left: auto;
         margin-right: auto;
-        height: 50px;
+        height: 150px;
+        border-radius: 80px;
+        font-size: 60px;
+        color:black;
     }
 
 </style>
@@ -94,6 +107,9 @@
 
     document.getElementById("searchBtn").onclick = function () {
         location.href= "./alt_calendar.html";
+        //TODO: aggiungere chiamata al database
+        /*usare per mandare il numero di persone 
+        document.getElementById('seatInput').value;*/
     };
 
  </script>
