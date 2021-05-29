@@ -62,6 +62,7 @@ instance.value();
 
 instance.reset();
 
+
 var instance = new SelectPure(".example", {
     options: myOptions,
     classNames: {
