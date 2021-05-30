@@ -5,6 +5,9 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="preconnect" href="https://fonts.gstatic.com"> 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
 </head>
 <body>
 
@@ -12,7 +15,15 @@
         <h1 class="title">Select a building</h1>
         <h4 class="instruction">Please select a building</h4>
     </div>
+    
 
+    <select id="select-building" placeholder="Pick a building..." onchange="insertclassrooms(this.value)">
+        <option value="">Select a building...</option>   
+    </select>
+
+
+
+    <!--
     <div class="dropdown">
       <button onclick="myFunction()" class="dropbtn">Building</button>
         <div id="myDropdown" class="dropdown-content">
@@ -22,18 +33,27 @@
             <a href="#empty" onclick="">esempio</a>
         </div>
     </div>
+    -->
 
     <div>
         <h1 class="title">Select a classroom</h1>
         <h4 class="instruction">Please select a classroom</h4>
     </div>
 
+    <select id="select-classroom" placeholder="Pick a classroom...">
+        <option value="">Select a classroom...</option>   
+    </select>
+
+
+    <!--
     <div class="dropdown">
       <button onclick="myFunction()" class="dropbtn">Classroom</button>
       <div id="myDropdown" class="dropdown-content">
           <input type="text" placeholder="Search a class..." id="myInput" onkeyup="filterFunction()">
       </div>
     </div>
+    -->
+
 
     <button class="search" id="searchBtn">Confirm booking</button>
     <h4 class="confirmedText" id="confirmed"></h4>
@@ -45,6 +65,67 @@ toggle between hiding and showing the dropdown content */
 function myFunction() {
   document.getElementById("myDropdown").classList.toggle("show");
 }
+
+$(document).ready(function () {
+      $('select').selectize({
+          sortField: 'text'
+      });
+  });
+
+
+
+window.onload = function insertbuildings() {
+    var buildings = ["Edificio 1", "Edificio 2", "Edificio 3"];
+
+    var $select = $(document.getElementById('select-building'));
+    var selectize = $select[0].selectize;
+
+    for(i = 0; i < buildings.length; i++) {
+        selectize.addOption({value: i, text: buildings[i]});
+        selectize.addItem(i);
+    }
+    
+    selectize.clear();
+}
+
+function insertclassrooms(value) {
+    var classroomsInBuilding = {
+        'Edificio 1': ["Aula 1", "Aula 2"],
+        'Edificio 2': ["Aula 3", "Aula 4"],
+        'Edificio 3': ["Aula 5", "Aula 6"],
+    }
+    
+    var $select = $(document.getElementById('select-classroom'));
+    var selectize = $select[0].selectize;
+
+    var i = 0;
+
+    if (value.length == 0)  $('#select-classroom').clear();
+    else {
+        for(classroomId in classroomsInBuilding) {
+            $('#select-classroom').clear();
+
+            selectize.addOption({value: i, text: classroomInBuilding[value][classroomId]});
+            selectize.addItem(i);
+            i++;
+        }
+    }
+
+    selectize.clear();
+}
+
+/**
+function changecat(value) {
+    if (value.length == 0) document.getElementById("category").innerHTML = "<option></option>";
+    else {
+        var catOptions = "";
+        for (categoryId in mealsByCategory[value]) {
+            catOptions += "<option>" + mealsByCategory[value][categoryId] + "</option>";
+        }
+        document.getElementById("category").innerHTML = catOptions;
+    }
+}
+**/
 
 
 function filterFunction() {
@@ -64,9 +145,9 @@ function filterFunction() {
 }
 
 document.getElementById("searchBtn").onclick = function () {
-        //TODO: inviare booking
-        document.getElementById("confirmed").innerHTML= "Thanks, your booking is confirmed";
-    };
+    //TODO: inviare booking
+    document.getElementById("confirmed").innerHTML= "Thanks, your booking is confirmed";
+};
 
 </script>
 
