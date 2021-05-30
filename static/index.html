@@ -111,13 +111,12 @@
           url: '/api/get_dates',
           method: 'GET',
           success: function(response) {
-            console.log(response);
+            location.href= "./select.html?dates=" + response;
           },
           error: function(response) {
             console.error(response);
           }
         });
-        location.href= "./select.html";
         /*usare per mandare il numero di persone 
         document.getElementById('seatInput').value;*/
     };
