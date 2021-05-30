@@ -97,6 +97,7 @@
 
 </style>
 
+<script src="./js/frameworks/jquery.min.js"></script>
 <script>
     function increment() {
        document.getElementById('seatInput').stepUp();
@@ -106,8 +107,17 @@
     }
 
     document.getElementById("searchBtn").onclick = function () {
-        location.href= "./alt_calendar.html";
-        //TODO: aggiungere chiamata al database
+        $.ajax({
+          url: '/api/get_dates',
+          method: 'GET',
+          success: function(response) {
+            console.log(response);
+          },
+          error: function(response) {
+            console.error(response);
+          }
+        });
+        location.href= "./select.html";
         /*usare per mandare il numero di persone 
         document.getElementById('seatInput').value;*/
     };
