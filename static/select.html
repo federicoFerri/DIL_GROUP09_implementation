@@ -17,7 +17,7 @@
     </div>
     
 
-    <select id="select-building" placeholder="Pick a building..." onchange="insertclassrooms(this.value)">
+    <select id="select-building" placeholder="Pick a building...">
         <option value="">Select a building...</option>   
     </select>
 
@@ -77,7 +77,7 @@ $(document).ready(function () {
 window.onload = function insertbuildings() {
     var buildings = ["Edificio 1", "Edificio 2", "Edificio 3"];
 
-    var $select = $(document.getElementById('select-building'));
+    var $select = $(document.getElementById("select-building"));
     var selectize = $select[0].selectize;
 
     for(i = 0; i < buildings.length; i++) {
@@ -88,31 +88,43 @@ window.onload = function insertbuildings() {
     selectize.clear();
 }
 
-function insertclassrooms(value) {
-    var classroomsInBuilding = {
-        'Edificio 1': ["Aula 1", "Aula 2"],
-        'Edificio 2': ["Aula 3", "Aula 4"],
-        'Edificio 3': ["Aula 5", "Aula 6"],
-    }
+function insertclassrooms() {  
+    $('#select-classroom').selectize()[0].selectize.destroy();
+
+    alert ("classrooms called");
+
+    var classroomMap = new Map();
+
+    var edificio1 = ["Aula 1", "Aula 2"];
+    var edificio2 = ["Aula 3", "Aula 4"];
+    var edificio3 = ["Aula 5", "Aula 6"];
     
+
+    // to fix and map the rooms to the actual building name (still didn't find a way with selectize js porc misery)
+    classroomMap.set("Edificio 1", edificio1);
+    classroomMap.set("Edificio 2", edificio2);
+    classroomMap.set("Edificio 3", edificio3);
+      
     var $select = $(document.getElementById('select-classroom'));
     var selectize = $select[0].selectize;
 
-    var i = 0;
+    //var value = selectize.getValue();
 
-    if (value.length == 0)  $('#select-classroom').clear();
+    var value = $('#select-building').find(":selected").text();
+
+    classrooms = classroomMap.get(value);
+
+    if (value.length == 0)  selectize.clear();
     else {
-        for(classroomId in classroomsInBuilding) {
-            $('#select-classroom').clear();
-
-            selectize.addOption({value: i, text: classroomInBuilding[value][classroomId]});
-            selectize.addItem(i);
-            i++;
+        for(i = 0; i < classrooms.length; i++) {
+          selectize.addOption({value: i, text: classrooms[i]});
+          selectize.addItem(i);
         }
     }
 
     selectize.clear();
-}
+};
+
 
 /**
 function changecat(value) {
