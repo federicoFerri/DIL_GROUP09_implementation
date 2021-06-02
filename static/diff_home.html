@@ -18,15 +18,27 @@
         <h2 class="title">Availabilities</h2>
         <label for="dateSelector">Filter date</label><input type="text" id="dateSelector" placeholder="{{date}}">
         </br>
-        <label for="timeSelector">Filter time</label><input type="text" id="timeSelector">
+        <label for="timeSelector">Filter time</label><input type="text" id="timeSelector" {{#if hour}} placeholder="{{hour}}" {{/if}}>
         </br>
-        <label for="buildingSelector">Filter building</label><select id="buildingSelector"><option disabled selected value> -- select an option -- </option>{{#each buildings}}<option value="{{this}}">{{this}}</option>{{/each}}</select>
+        <label for="buildingSelector">Filter building</label><select id="buildingSelector">
+            <option disabled selected value> {{#if building}} {{building}} {{else}} -- select to filter -- {{/if}} </option>
+            {{#each buildings}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if building}}<option value="reset">reset</option>{{/if}}</select>
         </br>
-        <label for="roomSelector">Filter room</label><select id="roomSelector"><option disabled selected value> -- select an option -- </option>{{#each classrooms}}<option value="{{this}}">{{this}}</option>{{/each}}</select>
+        <label for="roomSelector">Filter room</label><select id="roomSelector">
+            <option disabled selected value> {{#if room}} {{room}} {{else}} -- select to filter -- {{/if}} </option>
+            {{#each classrooms}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if room}}<option value="reset">reset</option>{{/if}}</select>
         </br>
-        <label for="peopleSelector">Filter people</label><select id="peopleSelector"><option disabled selected value> -- select an option -- </option>{{#each people}}<option value="{{this}}">{{this}}</option>{{/each}}</select>
+        <label for="peopleSelector">Filter people</label><select id="peopleSelector">
+            <option disabled selected value> {{#if peopleCount}} {{peopleCount}} {{else}} -- select to filter -- {{/if}} </option>
+            {{#each people}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if peopleCount}}<option value="reset">reset</option>{{/if}}</select>
         </br>
-        <label for="durationSelector">Filter duration</label><select id="durationSelector"><option disabled selected value> -- select an option -- </option>{{#each duration}}<option value="{{this}}">{{this}}</option>{{/each}}</select>
+        <label for="durationSelector">Filter duration</label><select id="durationSelector">
+            <option disabled selected value> {{#if durationValue}} {{durationValue}} {{else}} -- select to filter -- {{/if}} </option>
+            {{#each duration}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if durationValue}}<option value="reset">reset</option>{{/if}}</select>
         <div id="resultsHolder">
             {{#each results}}
                 <div style="margin-top: 10px">
@@ -51,6 +63,8 @@
     <script>
         var records = null;
         var dates = null;
+        var date = null;
+        var options = {};
         $(document).ready(function() {
             $.getJSON("/api/get_dates", function(data) {
                 dates = data;
@@ -58,52 +72,113 @@
                 renderDate(data[0]);
             });
         });
-        function renderDate(date) {
-            $.getJSON("/api/get_availabilities?date=" + date, function(data) {
+        function render() {
+            data = records;
+            if (options.building) {data = data.filter(x => x["buildingName"] === options.building)}
+            if (options.room) {data = data.filter(x => x["classroomName"] === options.room)}
+            if (options.peopleCount) {data = data.filter(x => x["seatsNumber"].length >= options.peopleCount)}
+            if (options.hour) {data = data.filter(x => x["hour"] === options.hour)}
+
+            let hours = records.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i);
+            data.forEach(function(firstRecord) {
+                let duration = 0;
+                for (let hour of hours.filter(v => v >= firstRecord["hour"])) {
+                    let secondRecord = data.find(function(secondRecord) {
+                        return secondRecord["hour"] === hour &&
+                            secondRecord["buildingName"] === firstRecord["buildingName"] &&
+                            secondRecord["classroomName"] === firstRecord["classroomName"]
+                    });
+                    if (secondRecord != null && firstRecord["seatsNumber"].some(function (seat) {return secondRecord["seatsNumber"].includes(seat)})) {
+                        duration++;
+                    } else break;
+                }
+                firstRecord.duration = duration;
+            })
+            if (options.durationValue) {data = data.filter(x => x.duration >= options.durationValue)}
+
+            let buildings = data.map(x => x["buildingName"]).filter((v, i, a) => a.indexOf(v) === i);
+            let classrooms = data.map(x => x["classroomName"]).filter((v, i, a) => a.indexOf(v) === i);
+            let people = Array.from({length: Math.max(...data.map(x => x["seatsNumber"].length))}, (_, i) => i + 1);
+            hours = data.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i);
+            let bindings = [];
+            data.forEach(function(record) {
+                record["seatsNumber"].forEach(function(seat) {
+                    bindings.push({buildingName: record["buildingName"], classroomName: record["classroomName"], seat: seat})
+                });
+            });
+            let durations = [];
+            bindings.filter((v, i, a) => a.indexOf(v) === i).forEach(function(binding) {
+                let duration = 0;
+                hours.forEach(function(hour) {
+                    let record = data.find(function(record) {
+                        return record["hour"] === hour && record["buildingName"] === binding["buildingName"] &&
+                            record["classroomName"] === binding["classroomName"]
+                    });
+                    if (record != null && record["seatsNumber"].includes(binding["seat"])) {
+                        duration++;
+                    } else {
+                        durations.push(duration);
+                        duration = 0;
+                    }
+                });
+                durations.push(duration);
+            });
+            let duration = Array.from({length: Math.max(...durations)}, (_, i) => i + 1);
+
+            let template = Handlebars.compile($("#mainTemplate").html());
+            $("#mainHolder").html(template({date: date, buildings: buildings.filter(v =>  v !== options.building),
+                classrooms: classrooms.filter(v =>  v !== options.room),
+                people: people.filter(v =>  v !== options.peopleCount),
+                duration: duration.filter(v =>  v !== options.durationValue), results: data, hour: options.hour,
+                building: options.building, room: options.room, peopleCount: options.peopleCount,
+                durationValue: options.durationValue}));
+
+            const disable = [true].concat(dates.map(x => {
+                let vals = x.split("-").map(y => parseInt(y));
+                vals[1]--;
+                return vals;
+            }));
+            $("#dateSelector").pickadate({disable: disable, firstDay: 1, format: "yyyy-mm-dd"});
+
+            $("#timeSelector").pickatime({interval: 60, min: [8, 0], max: [22, 0], disable: [true].concat(hours), format: "H"});
+        }
+        function renderDate(thisDate) {
+            $.getJSON("/api/get_availabilities?date=" + thisDate, function(data) {
                 records = data;
-                let buildings = data.map(x => x["buildingName"]).filter((v, i, a) => a.indexOf(v) === i);
-                let classrooms = data.map(x => x["classroomName"]).filter((v, i, a) => a.indexOf(v) === i);
-                let people = Array.from({length: Math.max(...data.map(x => x["seatsNumber"].length))}, (_, i) => i + 1);
-                let hours = data.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i);
-                let bindings = [];
-                data.forEach(function(record) {
-                    record["seatsNumber"].forEach(function(seat) {
-                        bindings.push({buildingName: record["buildingName"], classroomName: record["classroomName"], seat: seat})
-                    });
-                });
-                let durations = [];
-                bindings.filter((v, i, a) => a.indexOf(v) === i).forEach(function(binding) {
-                    let duration = 0;
-                    hours.forEach(function(hour) {
-                        let record = data.find(function(record) {
-                            return record["hour"] === hour && record["buildingName"] === binding["buildingName"] &&
-                                record["classroomName"] === binding["classroomName"]
-                        });
-                        if (record != null && record["seatsNumber"].includes(binding["seat"])) {
-                            duration++;
-                        } else {
-                            durations.push(duration);
-                            duration = 0;
-                        }
-                    });
-                    durations.push(duration);
-                });
-                let duration = Array.from({length: Math.max(...durations)}, (_, i) => i + 1);
-
-                let template = Handlebars.compile($("#mainTemplate").html());
-                $("#mainHolder").html(template({date: date, dates: dates, buildings: buildings, classrooms: classrooms,
-                    people: people, duration: duration, results: data}));
-
-                const disable = [true].concat(dates.map(x => {
-                    let vals = x.split("-").map(y => parseInt(y));
-                    vals[1]--;
-                    return vals;
-                }));
-                $("#dateSelector").pickadate({disable: disable, firstDay: 1, format: "yyyy-mm-dd"});
-                $("#timeSelector").pickatime({interval: 60, min: [8, 0], max: [22, 0], disable: [true].concat(hours), format: "H"});
+                date = thisDate;
+                options = {};
+                render();
             });
         }
-        $(document).on("change", "input[type=checkbox]", function(e){
+        $(document).on("change", "#roomSelector", function(e){
+            if ($(this).val() !== "reset")  options.room = $(this).val();
+            else options.room = undefined;
+            render();
+        });
+        $(document).on("change", "#buildingSelector", function(e){
+            if ($(this).val() !== "reset") options.building = $(this).val();
+            else options.building = undefined;
+            render();
+        });
+        $(document).on("change", "#peopleSelector", function(e){
+            if ($(this).val() !== "reset") options.peopleCount = parseInt($(this).val());
+            else options.peopleCount = undefined;
+            render();
+        });
+        $(document).on("change", "#timeSelector", function(e){
+            options.hour = parseInt($(this).val());
+            render();
+        });
+        $(document).on("change", "#durationSelector", function(e){
+            if ($(this).val() !== "reset") options.durationValue = parseInt($(this).val());
+            else options.durationValue = undefined;
+            render();
+        });
+        $(document).on("change", "#dateSelector", function(e){
+            if ($(this).val()) renderDate($(this).val());
+            else $("#dateSelector").val(date);
+        });
+        $(document).on("change", ".seatCheckbox", function(e){
             let index = $(this).attr("data-resultIndex");
             let selectedSeats = $(".seatCheckbox[data-resultIndex="+index+"]:checked").map(function() {
                 return $(this).attr("data-seat");
