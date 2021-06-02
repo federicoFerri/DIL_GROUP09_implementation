@@ -10,10 +10,6 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-body {
-  margin: 0px;
-}
-
 html {
   font-family: 'Roboto', sans-serif;
   box-sizing: border-box;
