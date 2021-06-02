@@ -1,5 +1,3 @@
-import json
-
 import jsonschema
 from flask import Flask, request, jsonify
 from jsonschema import validate
@@ -23,8 +21,8 @@ def index():
 def compute_availabilities(default, reservations, tz):
     not_available = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for reservation in reservations:
-        start_date = reservation['startDate'].astimezone(tz)
-        end_date = reservation['endDate'].astimezone(tz)
+        start_date = pytz.utc.localize(reservation['startDate']).astimezone(tz)
+        end_date = pytz.utc.localize(reservation['endDate']).astimezone(tz)
         for seat in reservation['seats']:
             hours = list(range(start_date.hour, end_date.hour))
             for hour in hours:
@@ -40,27 +38,6 @@ def compute_availabilities(default, reservations, tz):
     return available
 
 
-def validate_schema(instance):
-    schema = {
-        "type": "object",
-        "properties": {
-            "userId": {"type": "string"},
-            "startDate": {"type": "string"},
-            "endDate": {"type": "string"},
-            "seats": {"type": "array",
-                      "items": {"type": "number"}
-                      }
-        },
-        "additionalProperties": False
-    }
-
-    try:
-        validate(instance=instance, schema=schema)
-    except jsonschema.exceptions.ValidationError as err:
-        return False
-    return True
-
-
 @app.route('/api/get_dates')
 def get_dates():
     tz = pytz.timezone('Europe/Rome')
@@ -72,8 +49,8 @@ def get_dates():
                          range(1, 6)]:
         date_after = date.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
         filtered_reservations = [reservation for reservation in reservations if
-                                 date < reservation['startDate'] < date_after or date < reservation[
-                                     'endDate'] < date_after]
+                                 date < pytz.utc.localize(reservation['startDate']) < date_after or
+                                 date < pytz.utc.localize(reservation['endDate']) < date_after]
         default = {hour: {building['name']: {classroom['name']: classroom['seats']
                                              for classroom in building['classrooms']}
                           for building in main_db.building.find({})} for hour in range(max(date.hour, 8), 23)}
@@ -105,16 +82,43 @@ def get_availabilities():
     return jsonify(available)
 
 
+def validate_schema(instance):
+    schema = {
+        "type": "object",
+        "properties": {
+            "userId": {"type": "string"},
+            "date": {"type": "string"},
+            "hour": {"type": "integer"},
+            "duration": {"type": "integer"},
+            "building": {"type": "string"},
+            "classroom": {"type": "string"},
+            "seats": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": False
+    }
+
+    try:
+        validate(instance=instance, schema=schema)
+        return True
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+        return False
+
+
 @app.route('/api/book_seats', methods=['POST'])
 def book_seats():
-    # TODO: validate that the availability is indeed available using compute_availabilities like in previous functions
     reservation = request.json
-    if not reservation or validate_schema(reservation) is False:
+    if not reservation or not validate_schema(reservation):
         return 'bad request', 400
-    main_db.reservation.insert(reservation)
-    # main_db.reservation.insert(
-    #    {'userId': reservation['userId'], 'startDate': reservation['startDate'], 'endDate': reservation['endDate'],
-    #    'seats': seats})
+    tz = pytz.timezone('Europe/Rome')
+    date = tz.localize(datetime.datetime.strptime(reservation['date'], '%Y-%m-%d'))
+    start_date = date.replace(hour=reservation['hour'])
+    end_date = start_date + datetime.timedelta(hours=reservation['duration'])
+    mongo_data = {'user_id': reservation['userId'], 'startDate': start_date, 'endDate': end_date, 'seats': [
+        {'buildingName': reservation['building'], 'classroomName': reservation['classroom'], 'number': seat}
+        for seat in reservation['seats']
+    ]}
+    main_db.reservation.insert_one(mongo_data)
     return 'ok', 200
 
 

@@ -1,125 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="preconnect" href="https://fonts.gstatic.com"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select availability</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/themes/default.css"
+        integrity="sha512-x9ZSPqJJfUhtPuo+fw6331wHeC3vhDpNI3Iu4KC05zJrxx7MWYewaDaASGxAUgWyrwU50oFn6Xk0CrQnTSuoOA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/themes/default.date.css"
+        integrity="sha512-Ix4qjGzOeoBtc8sdu1i79G1Gxy6azm56P4z+KFl+po7kOtlKhYSJdquftaI4hj1USIahQuZq5xpg7WgRykDJPA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/themes/default.time.css"
+        integrity="sha512-OVCdZvsw/MeYx12cD+0Cmw/TA5Iw3bJXM4dpSIxXmDK3X5erHyETXkB3OGqnNQ72sL4UOuyTH9kdWds2MGYcBQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
 
-
-    <div>
-        <h1 class="title">How many seats?</h1>
-        <h2 class="instruction">Please select the number of seats you want to book</h2>
-    </div>
-
-
-    <div class="seatCounter">
-        
-        <input class="input" id=seatInput type=number min=1 max=8 value=1>
-        <div class="addSubButtons">
-            <button class="addSub" onclick="increment()">+</button>
-            <button class="addSub" onclick="decrement()">-</button>
+    <div class="outside-container">
+        <div class="container" id="mainHolder">
+            <h2 class="loading">Loading...</h2>
         </div>
     </div>
 
-    <button class="search" id="searchBtn">Search</button>
+    <script id="mainTemplate" type="text/x-handlebars-template">
 
-    
+        <div class="title">
+            <h2 style="margin: 10px">Availabilities</h2>
+        </div>
+
+        <label class="top-label" for="dateSelector">Choose the date</label><input class="top-input" type="text" id="dateSelector" placeholder="{{date}}">
+        </br>
+        <label class="top-label" for="timeSelector">Filter by time</label><input type="text" id="timeSelector" class="top-input" {{#if hour}} placeholder="{{hour}}" {{/if}}>
+        </br>
+        <label class="top-label" for="buildingSelector">Filter by building</label><div class="select"><select id="buildingSelector">
+            <option disabled selected value> {{#if building}} {{building}} {{else}} Buildings {{/if}} </option>
+            {{#each buildings}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if building}}<option value="reset">reset</option>{{/if}}</select></div>
+        </br>
+        <label class="top-label" for="roomSelector">Filter by room</label><div class="select"><select id="roomSelector">
+            <option disabled selected value> {{#if room}} {{room}} {{else}} Rooms {{/if}} </option>
+            {{#each classrooms}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if room}}<option value="reset">reset</option>{{/if}}</select></div>
+        </br>
+        <label class="top-label" for="peopleSelector">Filter by "how many people?"</label><div class="select"><select id="peopleSelector">
+            <option disabled selected value> {{#if peopleCount}} {{peopleCount}} {{else}} People {{/if}} </option>
+            {{#each people}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if peopleCount}}<option value="reset">reset</option>{{/if}}</select></div>
+        </br>
+        <label class="top-label" for="durationSelector">Filter by duration</label><div class="select"><select id="durationSelector">
+            <option disabled selected value> {{#if durationValue}} {{durationValue}} {{else}} Duration {{/if}} </option>
+            {{#each duration}}<option value="{{this}}">{{this}}</option>{{/each}}
+            {{#if durationValue}}<option value="reset">reset</option>{{/if}}</select></div>
+        <div id="resultsHolder" style="margin-top: 30px;">
+            {{#each results}}
+                <div class="result">
+                    <span class="seat-title">hour {{hour}} building {{buildingName}} classroom {{classroomName}}</span></br>
+                    <div class="seats">
+                        {{#each seatsNumber}}
+                            <label class="seat-label">{{this}}</label><input type="checkbox" class="seatCheckbox" data-resultIndex="{{@../index}}" data-buildingName="{{../buildingName}}" data-classroomName="{{../classroomName}}" data-hour="{{../hour}}" data-seat="{{this}}" value="{{this}}">
+                        {{/each}}
+                        <div id="durationHolder{{@index}}"></div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    </script>
+
+
+    <script id="durationTemplate" type="text/x-handlebars-template">
+        <label for="durationSelector{{index}}">Select duration</label><select id="durationSelector{{index}}" class="selectDuration" data-index="{{index}}">{{#each duration}}<option value="{{this}}">{{this}}</option>{{/each}}</select>
+        <button class="book" data-index="{{index}}">Book</button>
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/compressed/picker.js"
+        integrity="sha512-PC6BMUJfhXSSRw6fOnyfn21Yjc/6oRUnAGUboA+uzAUkKX5K2wzUvTHPCEjfwmmfrjCuiSnf23iX8JYVlJTXmA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/compressed/picker.date.js"
+        integrity="sha512-sWV6NfLhYF/5QK1RdK4rp0uwxn/eTKOuqf73dU7APGW3KVfCTblF1/9a+4pyXLQcSS25dxOkXWe7Mv7hYYft7g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pickadate.js/3.6.4/compressed/picker.time.js"
+        integrity="sha512-wsTBGzc0ra42jNgXre39rdHpXqAkkaSN+bRrXZ3hpOvqxOtLNZns3OseDZRfGCWSs00N9HuXyKHZEzKAWCl3SA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"
+        integrity="sha512-RNLkV3d+aLtfcpEyFG8jRbnWHxUqVZozacROI4J2F1sTaDqo1dPQYs01OMi1t1w9Y2FdbSCDSQ2ZVdAC8bzgAg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+    <script>
+        var records = null;
+        var dates = null;
+        var date = null;
+        var options = {};
+        var userId = Math.random().toString(36).substring(7);
+        $(document).ready(function() {
+            $.getJSON("/api/get_dates", function(data) {
+                dates = data;
+                $("#dateSelector").val(data[0]);
+                renderDate(data[0]);
+            });
+        });
+        function render() {
+            data = records;
+            if (options.building) {data = data.filter(x => x["buildingName"] === options.building)}
+            if (options.room) {data = data.filter(x => x["classroomName"] === options.room)}
+            if (options.peopleCount) {data = data.filter(x => x["seatsNumber"].length >= options.peopleCount)}
+            if (options.hour) {data = data.filter(x => x["hour"] === options.hour)}
+
+            let hours = records.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i);
+            data.forEach(function(firstRecord) {
+                let duration = 0;
+                for (let hour of hours.filter(v => v >= firstRecord["hour"])) {
+                    let secondRecord = data.find(function(secondRecord) {
+                        return secondRecord["hour"] === hour &&
+                            secondRecord["buildingName"] === firstRecord["buildingName"] &&
+                            secondRecord["classroomName"] === firstRecord["classroomName"]
+                    });
+                    if (secondRecord != null && firstRecord["seatsNumber"].some(function (seat) {return secondRecord["seatsNumber"].includes(seat)})) {
+                        duration++;
+                    } else break;
+                }
+                firstRecord.duration = duration;
+            })
+            if (options.durationValue) {data = data.filter(x => x.duration >= options.durationValue)}
+
+            let buildings = data.map(x => x["buildingName"]).filter((v, i, a) => a.indexOf(v) === i);
+            let classrooms = data.map(x => x["classroomName"]).filter((v, i, a) => a.indexOf(v) === i);
+            let people = Array.from({length: Math.max(...data.map(x => x["seatsNumber"].length))}, (_, i) => i + 1);
+            hours = data.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i);
+            let bindings = [];
+            data.forEach(function(record) {
+                record["seatsNumber"].forEach(function(seat) {
+                    bindings.push({buildingName: record["buildingName"], classroomName: record["classroomName"], seat: seat})
+                });
+            });
+            let durations = [];
+            bindings.filter((v, i, a) => a.indexOf(v) === i).forEach(function(binding) {
+                let duration = 0;
+                hours.forEach(function(hour) {
+                    let record = data.find(function(record) {
+                        return record["hour"] === hour && record["buildingName"] === binding["buildingName"] &&
+                            record["classroomName"] === binding["classroomName"]
+                    });
+                    if (record != null && record["seatsNumber"].includes(binding["seat"])) {
+                        duration++;
+                    } else {
+                        durations.push(duration);
+                        duration = 0;
+                    }
+                });
+                durations.push(duration);
+            });
+            let duration = Array.from({length: Math.max(...durations)}, (_, i) => i + 1);
+
+            let template = Handlebars.compile($("#mainTemplate").html());
+            $("#mainHolder").html(template({date: date, buildings: buildings.filter(v =>  v !== options.building),
+                classrooms: classrooms.filter(v =>  v !== options.room),
+                people: people.filter(v =>  v !== options.peopleCount),
+                duration: duration.filter(v =>  v !== options.durationValue), results: data, hour: options.hour,
+                building: options.building, room: options.room, peopleCount: options.peopleCount,
+                durationValue: options.durationValue}));
+
+            const disable = [true].concat(dates.map(x => {
+                let vals = x.split("-").map(y => parseInt(y));
+                vals[1]--;
+                return vals;
+            }));
+            $("#dateSelector").pickadate({disable: disable, firstDay: 1, format: "yyyy-mm-dd"});
+
+            $("#timeSelector").pickatime({interval: 60, min: [8, 0], max: [22, 0], disable: [true].concat(hours), format: "H"});
+        }
+        function renderDate(thisDate) {
+            $.getJSON("/api/get_availabilities?date=" + thisDate, function(data) {
+                records = data;
+                date = thisDate;
+                options = {};
+                render();
+            });
+        }
+        $(document).on("change", "#roomSelector", function(e){
+            if ($(this).val() !== "reset")  options.room = $(this).val();
+            else options.room = undefined;
+            render();
+        });
+        $(document).on("change", "#buildingSelector", function(e){
+            if ($(this).val() !== "reset") options.building = $(this).val();
+            else options.building = undefined;
+            render();
+        });
+        $(document).on("change", "#peopleSelector", function(e){
+            if ($(this).val() !== "reset") options.peopleCount = parseInt($(this).val());
+            else options.peopleCount = undefined;
+            render();
+        });
+        $(document).on("change", "#timeSelector", function(e){
+            options.hour = parseInt($(this).val());
+            render();
+        });
+        $(document).on("change", "#durationSelector", function(e){
+            if ($(this).val() !== "reset") options.durationValue = parseInt($(this).val());
+            else options.durationValue = undefined;
+            render();
+        });
+        $(document).on("change", "#dateSelector", function(e){
+            if ($(this).val()) renderDate($(this).val());
+            else $("#dateSelector").val(date);
+        });
+        $(document).on("click", ".book", function(e){
+            let index = $(this).attr("data-index");
+            let buildingName = records[parseInt(index)]["buildingName"];
+            let classroomName = records[parseInt(index)]["classroomName"];
+            let hour = records[parseInt(index)]["hour"];
+            let duration = parseInt($(".selectDuration[data-index=" + $(this).attr("data-index") + "]").val());
+            let selectedSeats = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").map(function () {
+                return $(this).attr("data-seat");
+            }).get();
+            $.ajax({
+                type: "POST",
+                url: "/api/book_seats",
+                data: JSON.stringify ({userId: userId, date: date, building: buildingName, classroom: classroomName,
+                    hour: hour, duration: duration, seats: selectedSeats}),
+                contentType: "application/json"
+            }).done(function()  {
+                alert('booking successful');
+                location.reload();
+            });
+        });
+        $(document).on("change", ".seatCheckbox", function(e){
+            let index = $(this).attr("data-resultIndex");
+            let selectedSeats = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").map(function () {
+                return $(this).attr("data-seat");
+            }).get();
+            if (selectedSeats.length <= 0) {
+                $("#durationHolder" + index).html("");
+                return;
+            }
+            let hour = parseInt($(this).attr("data-hour"));
+            let buildingName = $(this).attr("data-buildingName");
+            let classroomName = $(this).attr("data-classroomName");
+            let hours = records.map(x => x["hour"]).filter((v, i, a) => a.indexOf(v) === i).filter(x => x >= hour);
+            let durations = [];
+            selectedSeats.forEach(function (seat) {
+                let duration = 0;
+                for (let hour of hours) {
+                    let record = records.find(function (record) {
+                        return record["hour"] === hour && record["buildingName"] === buildingName &&
+                            record["classroomName"] === classroomName
+                    });
+                    if (record != null && record["seatsNumber"].includes(seat)) {
+                        duration++;
+                    } else break;
+                }
+                durations.push(duration);
+            });
+            let duration = Array.from({ length: Math.min(...durations) }, (_, i) => i + 1);
+            let template = Handlebars.compile($("#durationTemplate").html());
+            $("#durationHolder" + index).html(template({ index: index, duration: duration }));
+        });
+
+    </script>
 </body>
+
 </html>
 
 <style>
-    .title {
-        margin-bottom: 130px;
-        text-align: center;
-        margin-top: 200px;
-        font-size: 100px;
+    .container {
+        width: 100%;
+        margin: auto;
     }
 
-    .instruction {
-        text-align: center;
-        margin-bottom: 100px;
+    label.top-label {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-left: 10%;
+        margin-right: 10%;
     }
 
-    .input {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        top: auto;
-        width: 200px;
-        height: 200px;
-        border-radius: 20%;
-        border-style: solid;
-        border-color: rgb(224, 224, 224);
-        font-size: 88px;
+    input.top-input {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-right: 10%;
+        margin-left: 10%;
+    }
+
+    .outside-container {
         text-align: center;
     }
 
-    .addSubButtons {
-        display: block;
+    .container {
+        display: inline-block;
+    }
+
+    .loading {
         margin-top: 60px;
-        text-align: center;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 60px;
-        width: 400px;
-        height: 300px;
-        
     }
 
-    .addSub {
-        font-size: 80px;
-        width: 130px;
-        height: 130px;
-        margin: 20px;
-        border-radius: 50%;
-        color: white;
+    select {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-right: 10%;
+        margin-left: 10%;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        -ms-appearance: none;
+        text-rendering: auto;
+        letter-spacing: normal;
+        word-spacing: normal;
+        text-transform: none;
+        text-indent: 0px;
+        text-shadow: none;
+        display: inline-block;
+        text-align: start;
+        appearance: auto;
+        -webkit-rtl-ordering: logical;
+        cursor: text;
+        padding: 1px 2px;
+        border-width: 1px;
+        border-style: inset;
+        border-image: initial;
+        border-radius: 6px;
+        font: inherit;
+        box-shadow: none;
+        width: 153px;
+        background-color: white;
+    }
+
+    .result {
+        margin-top: 25px;
+        margin-bottom: 25px;
+        border-width: 1px;
+        border-radius: 2px;
+        border: 1px solid #ccc!important;
+        padding: 0.01em 16px;
+        border-radius: 16px;
+        box-sizing: inherit;
+    }
+
+    .seats {
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    .seat-label {
+        margin-right: 5px;
+        margin-left: 10px;
+    }
+
+    .seat-title {
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .title {
         background-color: #4CAF50;
-        border-color: rgb(139, 139, 139);
+        color: white;
+        margin: -10px -20px 20px -20px;
+        padding: 1rem 0;
     }
 
-    .search {
-        width: 400px;
-        margin-top: 100px;
-        text-align: center;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        height: 150px;
-        border-radius: 80px;
-        font-size: 60px;
-        color:white;
+    .arrow {
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        display: inline-block;
+        padding: 3px;
     }
 
+    .left {
+        transform: rotate(135deg);
+        -webkit-transform: rotate(135deg);
+    }
+
+    .back-link {
+        display: inline-block;
+        position: absolute;
+        top: 35px;
+        left: 20px;
+    }
+
+    .book {
+        margin: 5px;
+        padding: 5px;
+    }
 </style>
-
-<script src="./js/frameworks/jquery.min.js"></script>
-<script>
-    function increment() {
-       document.getElementById('seatInput').stepUp();
-    }
-    function decrement() {
-       document.getElementById('seatInput').stepDown();
-    }
-
-    document.getElementById("searchBtn").onclick = function () {
-        $.ajax({
-          url: '/api/get_dates',
-          method: 'GET',
-          success: function(response) {
-            location.href= "./select.html?dates=" + response;
-          },
-          error: function(response) {
-            console.error(response);
-          }
-        });
-        /*usare per mandare il numero di persone 
-        document.getElementById('seatInput').value;*/
-    };
-
- </script>
-
