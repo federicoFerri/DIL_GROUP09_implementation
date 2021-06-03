@@ -223,9 +223,9 @@
         });
         $(document).on("click", ".book", function(e){
             let index = $(this).attr("data-index");
-            let buildingName = records[parseInt(index)]["buildingName"];
-            let classroomName = records[parseInt(index)]["classroomName"];
-            let hour = records[parseInt(index)]["hour"];
+            let buildingName = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-buildingName");
+            let classroomName = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-classroomName");
+            let hour = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-hour");
             let duration = parseInt($(".selectDuration[data-index=" + $(this).attr("data-index") + "]").val());
             let selectedSeats = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").map(function () {
                 return $(this).attr("data-seat");
