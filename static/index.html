@@ -71,7 +71,7 @@
         </div>
 
         <div id="dialog" title="Seat booked" style="display: none;">
-            <p>Booking succesfull</p>
+            <p>Booking successful</p>
         </div>
 
     </script>
@@ -237,9 +237,9 @@
                     hour: hour, duration: duration, seats: selectedSeats}),
                 contentType: "application/json"
             }).done(function()  {
-                $( "#dialog" ).dialog();
-                //alert('booking successful');
-                //location.reload();
+                $("#dialog").dialog({close: function() {
+                    location.reload();
+                }});
             });
         });
         $(document).on("change", ".seatCheckbox", function(e){
