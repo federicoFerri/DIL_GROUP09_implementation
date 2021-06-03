@@ -225,7 +225,7 @@
             let index = $(this).attr("data-index");
             let buildingName = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-buildingName");
             let classroomName = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-classroomName");
-            let hour = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-hour");
+            let hour = parseInt($(".seatCheckbox[data-resultIndex=" + index + "]:checked").attr("data-hour"));
             let duration = parseInt($(".selectDuration[data-index=" + $(this).attr("data-index") + "]").val());
             let selectedSeats = $(".seatCheckbox[data-resultIndex=" + index + "]:checked").map(function () {
                 return $(this).attr("data-seat");
